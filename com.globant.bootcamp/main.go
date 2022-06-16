@@ -9,7 +9,6 @@ import (
 
 type App struct {
 	Router *mux.Router
-	data   []Agenda
 }
 
 func homePage(w http.ResponseWriter, r *http.Request) {
@@ -31,16 +30,7 @@ func (a *App) Run(addr string) {
 
 var A = App{}
 
-func getDB() []Agenda {
-	return A.data
-}
-
-func updateData(data []Agenda) {
-	A.data = data
-}
-
 func main() {
-	A.data = make([]Agenda, 0)
 	A.initializeRoutes()
 	A.Run(":8874")
 }

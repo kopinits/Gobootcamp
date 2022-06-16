@@ -11,7 +11,8 @@ import (
 
 func getAgendas(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Agenda Data:\n")
-	for _, agenda := range getDB() {
+	w.Header().Set("Content-Type", "application/json")
+	for _, agenda := range ListAll() {
 		json.NewEncoder(w).Encode(agenda)
 	}
 	w.WriteHeader(http.StatusAccepted)
@@ -21,30 +22,33 @@ func saveAgenda(w http.ResponseWriter, r *http.Request) {
 	requestBody, _ := ioutil.ReadAll(r.Body)
 	var agenda Agenda
 	json.Unmarshal(requestBody, &agenda)
-
-	updateData(append(getDB(), agenda))
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(agenda)
+	Save(agenda)
+	doReturn(w)
 }
 
 func getById(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	key, _ := strconv.Atoi(vars["id"])
-	agenda := getDB()[key]
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(agenda)
+	if len(getDatabase()) >= key {
+		agenda := GetById(key)
+		doReturn(w)
+		json.NewEncoder(w).Encode(agenda)
+	} else {
+		json.NewEncoder(w).Encode("Agenda id " + vars["id"] + " not found")
+	}
 }
 
 func delete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	key, _ := strconv.Atoi(vars["id"])
-	slice := getDB()
-	copy(slice[key:], slice[key+1:])
-	slice = slice[:len(slice)-1]
-	updateData(slice)
+	if Delete(key) {
+		doReturn(w)
+	} else {
+		json.NewEncoder(w).Encode("Agenda id " + vars["id"] + " not found")
+	}
+}
+
+func doReturn(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
-
 }
